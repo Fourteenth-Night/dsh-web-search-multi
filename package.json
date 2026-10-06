@@ -25,7 +25,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/<your-account>/dsh-web-search-multi.git"
+    "url": "git+https://github.com/Fourteenth-Night/dsh-web-search-multi.git"
   },
   "scripts": {
     "test": "node --import ./test/loader.mjs test/self-test.mjs"
@@ -37,9 +37,9 @@
     "@deepseek-ai/dsh-tools": "^0.1.2-alpha.1",
     "@deepseek-ai/schemastery": "^3.18.1"
   },
-  "homepage": "https://github.com/<your-account>/dsh-web-search-multi#readme",
+  "homepage": "https://github.com/Fourteenth-Night/dsh-web-search-multi#readme",
   "bugs": {
-    "url": "https://github.com/<your-account>/dsh-web-search-multi/issues"
+    "url": "https://github.com/Fourteenth-Night/dsh-web-search-multi/issues"
   },
   "engines": {
     "node": ">=18"
