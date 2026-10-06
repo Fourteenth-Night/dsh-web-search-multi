@@ -133,6 +133,22 @@ FIRECRAWL_API_KEY: fc-...
 | `tavily.maxResults` | 8 | Results per query. |
 | `firecrawl.baseURL` | `https://api.firecrawl.dev/v1` | v2 is supported via explicit override; the response mapper handles both shapes (`data` array vs `data.matches`). |
 | `firecrawl.limit` | 8 | Results per query. |
+| `<engine>.keys` | — | Array of API keys forming a credential pool; overrides `apiKey`. |
+| `<engine>.strategy` | `round-robin` | `round-robin` \| `least-loaded`. |
+| `<engine>.cooldownMs` | `60000` | Cool-down after a failed attempt (`429`/`5xx`/`401`/`403`) before the slot rejoins rotation. |
+
+## Multi-Account Credential Pools
+
+Each engine accepts a `keys` array to pool several API keys behind one provider. Requests rotate across healthy keys; a key that fails with `429`, `5xx`, `401`, or `403` is cooled down for `cooldownMs` and skipped, and the next healthy key is tried automatically. Non-retryable `4xx` errors fail immediately. When every key is cooling down, the search reports `WEB_PROVIDER_ERROR` with per-key diagnostics (keys are shown truncated, never in full).
+
+```yaml
+tavily:
+  keys: ["tvly-main-...", "tvly-backup-..."]
+  strategy: round-robin      # or least-loaded
+  cooldownMs: 60000
+```
+
+`least-loaded` prefers the key with the fewest in-flight requests and consecutive-failure weight. Tavily additionally falls back to its official **keyless** mode when the pool is empty.
 
 ## FAQ and Troubleshooting
 

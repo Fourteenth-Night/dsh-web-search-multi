@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.2.0 (2026-10-07)
+
+- **Multi-account credential pools**: each engine accepts a `keys` array (`KeyPool`); requests rotate across healthy keys with `round-robin` or `least-loaded` strategy.
+- **Failover semantics**: `429`/`5xx`/`401`/`403` cool the failing key (`cooldownMs`, default 60 s) and switch to the next healthy key automatically; non-retryable `4xx` fail immediately; all-cooled pools report `WEB_PROVIDER_ERROR` with truncated per-key diagnostics.
+- **Backward compatible**: single `apiKey` and the credentials-resolution chain (`.credentials.yaml` → environment) are unchanged; Tavily still falls back to official keyless mode on an empty pool.
+- **Testing**: KeyPool unit tests (rotation, cooling, least-loaded) plus live pool-path E2E for all three engines.
+
 ## v0.1.1 (2026-10-06)
 
 - **Tavily keyless mode**: the Tavily provider sends the official `X-Tavily-Access-Mode: keyless` header when no key is present, remaining fully usable without credentials (`available()` no longer requires a key for Tavily).

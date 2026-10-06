@@ -133,6 +133,22 @@ FIRECRAWL_API_KEY: fc-...
 | `tavily.maxResults` | 8 | 每查询结果数。 |
 | `firecrawl.baseURL` | `https://api.firecrawl.dev/v1` | 支持显式覆盖为 v2；响应映射同时兼容两种结构（`data` 数组与 `data.matches`）。 |
 | `firecrawl.limit` | 8 | 每查询结果数。 |
+| `<engine>.keys` | — | 组成凭据池的 API 密钥数组；覆盖 `apiKey`。 |
+| `<engine>.strategy` | `round-robin` | `round-robin` \| `least-loaded`。 |
+| `<engine>.cooldownMs` | `60000` | 某次尝试失败（`429`/`5xx`/`401`/`403`）后的冷却时长，期满后该槽位重新参与轮换。 |
+
+## 多账号凭据池
+
+各引擎接受 `keys` 数组，将多个 API 密钥聚为一个凭据池置于单个提供方之后。请求在健康密钥之间轮换；以 `429`、`5xx`、`401` 或 `403` 失败的密钥将冷却 `cooldownMs` 并被跳过，自动尝试下一个健康密钥。不可重试的 `4xx` 立即失败。当所有密钥均在冷却时，搜索返回 `WEB_PROVIDER_ERROR`，附逐密钥诊断信息（密钥仅以截断形式展示，绝不完整暴露）。
+
+```yaml
+tavily:
+  keys: ["tvly-main-...", "tvly-backup-..."]
+  strategy: round-robin      # 或 least-loaded
+  cooldownMs: 60000
+```
+
+`least-loaded` 优先选择进行中请求数与连续失败权重之和最小的密钥。当池为空时，Tavily 额外回退至官方 **keyless** 模式。
 
 ## 常见问题与排查
 

@@ -3,6 +3,7 @@
 // Reads engine keys from the environment (EXA_API_KEY, TAVILY_API_KEY, FIRECRAWL_API_KEY).
 // Usage: node test/self-test.mjs   (set the keys first; missing keys are skipped with a warning)
 import { apply } from "../lib/index.js";
+import { KeyPool } from "../lib/engines.js";
 
 const keys = {
   exa: process.env.EXA_API_KEY,
@@ -64,5 +65,26 @@ if (keylessTv) {
     fail("keyless tavily threw: " + (e.message || e).slice(0, 120));
   }
 }
+
+// ---- KeyPool unit tests (no network) ----
+const rr = new KeyPool(["a", "b", "c"], "round-robin", 60000);
+const order = [];
+for (let i = 0; i < 4; i++) { const s = rr.acquire(); order.push(s.key); s.release(true); }
+ok("keypool round-robin order: " + order.join(","));
+if (order.join(",") !== "a,b,c,a") fail("round-robin rotation order wrong");
+
+const cool = new KeyPool(["x", "y"], "round-robin", 60000);
+const sx = cool.acquire(); sx.release(false);
+const sy = cool.acquire();
+if (sy === null || sy.key !== "y") fail("cooled slot must be skipped");
+sy.release(false);
+if (cool.acquire() !== null) fail("all-cooled pool must refuse acquire");
+
+const ll = new KeyPool(["p", "q"], "least-loaded", 60000);
+const lp1 = ll.acquire();
+const lp2 = ll.acquire();
+if (lp1.key === lp2.key) fail("least-loaded must pick the idle slot while one is in-flight");
+lp1.release(true); lp2.release(true);
+ok("keypool least-loaded + cooldown ok");
 
 console.log(process.exitCode ? "SELF-TEST FAILED" : "SELF-TEST PASSED");
