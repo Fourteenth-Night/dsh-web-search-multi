@@ -50,6 +50,19 @@ for (const t of tools) {
 const p2 = [];
 apply({ get: () => undefined, web: { registerSearchProvider(p) { p2.push(p); } }, tools: { register() {} } }, {});
 ok("no-key availability: " + p2.map(p => p.id + ":" + p.available()).join(" | "));
-if (p2.some(p => p.available())) fail("a provider is available without a key");
+if (p2.some(p => p.available() && p.id !== "tavily")) fail("exa/firecrawl must not be available without a key");
+const keylessTv = p2.find(p => p.id === "tavily");
+if (!keylessTv || !keylessTv.available()) fail("tavily must be available keyless");
+
+// Keyless live E2E: the no-key Tavily provider must still search (official keyless mode)
+if (keylessTv) {
+  try {
+    const r = await keylessTv.search({ query: "DeepSeek Harness", maxResults: 3 }, undefined);
+    ok("keyless tavily live => " + r.sources.length + " sources, first=" + (r.sources[0]?.title ?? "").slice(0, 40));
+    if (!Array.isArray(r.sources) || r.sources.length === 0) fail("keyless tavily returned no sources");
+  } catch (e) {
+    fail("keyless tavily threw: " + (e.message || e).slice(0, 120));
+  }
+}
 
 console.log(process.exitCode ? "SELF-TEST FAILED" : "SELF-TEST PASSED");
