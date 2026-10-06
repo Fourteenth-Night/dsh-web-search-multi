@@ -4,7 +4,7 @@
 #  loader will fail with: patch: entry "..." not found)
 - insert:
     - id: web-search-multi
-      name: "dsh-web-search-multi"
+      name: "dsh-web-search-unified"
       config:
         # max sources returned by each engine tool call
         toolMaxResults: 8

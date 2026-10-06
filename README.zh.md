@@ -1,4 +1,4 @@
-# dsh-web-search-multi
+# dsh-web-search-unified
 
 **面向 DeepSeek Harness 的统一多引擎 Web 搜索提供方插件。** 单一插件集成三家独立的搜索服务——Exa、Tavily 与 Firecrawl——并将每一家暴露为面向模型的工具，使语言模型能够按查询性质自主选择引擎。
 
@@ -8,7 +8,7 @@
 
 ## 摘要
 
-`dsh-web-search-multi` 通过 DeepSeek Harness 的 Web 能力接缝（`ctx.web`）注册三家搜索提供方——Exa、Tavily 与 Firecrawl——并经由工具运行时（`ctx.tools`）注册三个对应的模型可见工具（`web_search_exa`、`web_search_tavily`、`web_search_firecrawl`）。每个工具直接路由至其专属引擎实例，绕过接缝的部署级提供方选择，从而允许模型按查询性质择取最合适的引擎（例如，语义研究类查询交由 Exa，新闻类查询交由 Tavily，全文检索交由 Firecrawl）。标准 `web_search` 工具仍作为兜底路径可用，其引擎由部署配置（`DSH_WEB_SEARCH_PROVIDER`）决定。
+`dsh-web-search-unified` 通过 DeepSeek Harness 的 Web 能力接缝（`ctx.web`）注册三家搜索提供方——Exa、Tavily 与 Firecrawl——并经由工具运行时（`ctx.tools`）注册三个对应的模型可见工具（`web_search_exa`、`web_search_tavily`、`web_search_firecrawl`）。每个工具直接路由至其专属引擎实例，绕过接缝的部署级提供方选择，从而允许模型按查询性质择取最合适的引擎（例如，语义研究类查询交由 Exa，新闻类查询交由 Tavily，全文检索交由 Firecrawl）。标准 `web_search` 工具仍作为兜底路径可用，其引擎由部署配置（`DSH_WEB_SEARCH_PROVIDER`）决定。
 
 凭据完全通过环境变量（`EXA_API_KEY`、`TAVILY_API_KEY`、`FIRECRAWL_API_KEY`）提供；插件本身不存储、不嵌入任何机密。
 
@@ -52,6 +52,8 @@ cd <DSH_HOME>\profiles\web
 pnpm add "link:./local-plugins/dsh-web-search-multi"
 ```
 
+> **备选（npm 分发）**：本包发布至 npm 后，可直接 `pnpm add dsh-web-search-unified` 从注册表安装，跳过 `local-plugins` 步骤；下方 patch 中 `name` 使用 `"dsh-web-search-unified"`。
+
    （桌面版内置 pnpm 入口：`<harness>\.desktop-bin\pnpm.cmd`，可处理 Windows 锁重命名恢复。）
 
 2. 在 `cordis.patch.yml` 中注册插件。**注意**：新增插件必须包裹在 `insert:` 列表中——裸写的 `- id:/name:` 条目表示「覆盖已加载插件」，会导致启动时报 `patch: entry "..." not found`。
@@ -59,7 +61,7 @@ pnpm add "link:./local-plugins/dsh-web-search-multi"
 ```yaml
 - insert:
     - id: web-search-multi
-      name: "dsh-web-search-multi"
+      name: "dsh-web-search-unified"
       config:
         toolMaxResults: 8
         toolMaxQueries: 4

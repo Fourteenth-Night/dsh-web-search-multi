@@ -1,4 +1,4 @@
-# dsh-web-search-multi
+# dsh-web-search-unified
 
 **A unified, multi-engine web-search provider plugin for DeepSeek Harness.** One plugin integrates three independent search services — Exa, Tavily, and Firecrawl — and exposes each as a model-facing tool, enabling the language model to select an engine per query.
 
@@ -8,7 +8,7 @@
 
 ## Abstract
 
-`dsh-web-search-multi` extends the DeepSeek Harness web capability seam (`ctx.web`) with three search providers — Exa, Tavily, and Firecrawl — and registers three corresponding model-facing tools (`web_search_exa`, `web_search_tavily`, `web_search_firecrawl`) through the harness tool runtime (`ctx.tools`). Each tool routes directly to its dedicated engine instance, bypassing the seam's deployment-level provider selection, so the model may choose the engine best suited to the query (e.g., semantic research queries to Exa, news-oriented queries to Tavily, full-content retrieval to Firecrawl). The standard `web_search` tool remains available as a fallback, governed by the deployment configuration (`DSH_WEB_SEARCH_PROVIDER`).
+`dsh-web-search-unified` extends the DeepSeek Harness web capability seam (`ctx.web`) with three search providers — Exa, Tavily, and Firecrawl — and registers three corresponding model-facing tools (`web_search_exa`, `web_search_tavily`, `web_search_firecrawl`) through the harness tool runtime (`ctx.tools`). Each tool routes directly to its dedicated engine instance, bypassing the seam's deployment-level provider selection, so the model may choose the engine best suited to the query (e.g., semantic research queries to Exa, news-oriented queries to Tavily, full-content retrieval to Firecrawl). The standard `web_search` tool remains available as a fallback, governed by the deployment configuration (`DSH_WEB_SEARCH_PROVIDER`).
 
 Authentication credentials are supplied exclusively through environment variables (`EXA_API_KEY`, `TAVILY_API_KEY`, `FIRECRAWL_API_KEY`); the plugin itself never stores or embeds secrets.
 
@@ -52,6 +52,8 @@ cd <DSH_HOME>\profiles\web
 pnpm add "link:./local-plugins/dsh-web-search-multi"
 ```
 
+> **Alternative (npm distribution)**: once published, install directly from the registry — `pnpm add dsh-web-search-unified` — and skip the `local-plugins` step. Use `name: "dsh-web-search-unified"` in the patch below.
+
    (Desktop builds bundle a pnpm shim at `<harness>\.desktop-bin\pnpm.cmd`, which handles Windows locked-rename recovery.)
 
 2. Register the plugin in `cordis.patch.yml`. **Note**: new plugins must be wrapped in an `insert:` list — a bare `- id:/name:` entry denotes an override of an already-loaded plugin and causes a `patch: entry "..." not found` failure at boot.
@@ -59,7 +61,7 @@ pnpm add "link:./local-plugins/dsh-web-search-multi"
 ```yaml
 - insert:
     - id: web-search-multi
-      name: "dsh-web-search-multi"
+      name: "dsh-web-search-unified"
       config:
         toolMaxResults: 8
         toolMaxQueries: 4

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Standalone self-test for dsh-web-search-multi. No harness required.
+// Standalone self-test for dsh-web-search-unified. No harness required.
 // Reads engine keys from the environment (EXA_API_KEY, TAVILY_API_KEY, FIRECRAWL_API_KEY).
 // Usage: node test/self-test.mjs   (set the keys first; missing keys are skipped with a warning)
 import { apply } from "../lib/index.js";

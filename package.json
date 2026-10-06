@@ -1,5 +1,5 @@
 {
-  "name": "dsh-web-search-multi",
+  "name": "dsh-web-search-unified",
   "version": "0.1.0",
   "description": "Unified multi-engine search provider for DeepSeek Harness: one plugin, three engines (Exa / Tavily / Firecrawl), three model-facing tools (web_search_exa / web_search_tavily / web_search_firecrawl) plus standard web_search fallback.",
   "keywords": [
