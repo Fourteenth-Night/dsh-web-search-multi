@@ -1,0 +1,27 @@
+# Add to your DSH profile: <DSH_HOME>/profiles/<profile>/cordis.patch.yml
+# (IMPORTANT: new plugins must be wrapped in an insert: list — a bare
+#  "- id:/name:" entry means "override an already-loaded plugin" and the
+#  loader will fail with: patch: entry "..." not found)
+- insert:
+    - id: web-search-multi
+      name: "dsh-web-search-multi"
+      config:
+        # max sources returned by each engine tool call
+        toolMaxResults: 8
+        # max queries per call (1-4, mirrors the official web_search tool)
+        toolMaxQueries: 4
+        # cooperative tool-call budget (ms), enforced by the timeout policy
+        toolTimeoutMs: 30000
+        # per-engine overrides (all optional; defaults shown)
+        exa:
+          searchType: auto        # auto | keyword | neural
+          numResults: 8
+        tavily:
+          searchDepth: basic      # basic | advanced
+          topic: general          # general | news | finance
+          maxResults: 8
+        firecrawl:
+          # v1 keeps the classic response shape; v2 available via
+          # "https://api.firecrawl.dev/v2" (response shape differs: data.matches)
+          baseURL: "https://api.firecrawl.dev/v1"
+          limit: 8

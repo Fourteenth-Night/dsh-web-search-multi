@@ -1,0 +1,40 @@
+{
+  "name": "dsh-web-search-multi",
+  "version": "0.1.0",
+  "description": "Unified multi-engine search provider for DeepSeek Harness: one plugin, three engines (Exa / Tavily / Firecrawl), three model-facing tools (web_search_exa / web_search_tavily / web_search_firecrawl) plus standard web_search fallback.",
+  "keywords": [
+    "deepseek-harness",
+    "dsh",
+    "plugin",
+    "search",
+    "exa",
+    "tavily",
+    "firecrawl",
+    "llm",
+    "agent"
+  ],
+  "type": "module",
+  "main": "lib/index.js",
+  "files": [
+    "lib",
+    "test",
+    "examples",
+    "README.md",
+    "LICENSE"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/<your-account>/dsh-web-search-multi.git"
+  },
+  "scripts": {
+    "test": "node --import ./test/loader.mjs test/self-test.mjs"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "^4.0.1",
+    "@deepseek-ai/dsh-web": "^0.1.2-alpha.1",
+    "@deepseek-ai/dsh-launch-environment": "^0.1.2-alpha.1",
+    "@deepseek-ai/dsh-tools": "^0.1.2-alpha.1",
+    "@deepseek-ai/schemastery": "^3.18.1"
+  }
+}
