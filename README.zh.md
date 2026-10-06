@@ -130,6 +130,17 @@ pnpm add "link:./local-plugins/dsh-web-search-multi"
 | Tavily | 每月 1,000 积分；无需支付方式（[积分与定价](https://docs.tavily.com/documentation/api-credits)）。 | `basic` 搜索 1 积分；`advanced` 2 积分。 |
 | Firecrawl | 每月 1,000 积分 ≈ 500 次搜索或 1,000 页抓取；无需支付方式（[定价](https://www.firecrawl.dev/pricing)）。 | 超出免费余额按量计费。 |
 
+## 致谢
+
+作者谨此致谢：
+
+- **DeepSeek Harness（DSH）社区**提供的 Web 能力接缝（`ctx.web.registerSearchProvider`）与面向模型工具契约（`ctx.tools.register`）：其稳定的公开接口使得在不分叉 harness 的前提下实现第三方、运行时可组合的搜索提供方成为可能。
+- **Exa、Tavily 与 Firecrawl** 慷慨的免费额度档位，使三个适配器的端到端真实调用验证得以零成本完成，亦是后续评估阶段的首选入口。
+- [`@deepseek-ai/dsh-web-search-exa`](https://github.com/deepseek-ai/deepseek-harness/tree/main/packages/web/web-search-exa) 的维护者，其 MIT 许可的参考实现对 Exa 适配器的设计与输出映射具有直接指导意义。
+- 早期采用者与评审者，其对配置易用性与文档的反馈直接塑造了当前版本。
+
+移植出处与许可证细节见「许可证与致谢」一节。
+
 ## 许可证与致谢
 
 MIT 许可证。Exa 适配器移植自 [`@deepseek-ai/dsh-web-search-exa`](https://github.com/deepseek-ai/deepseek-harness/tree/main/packages/web/web-search-exa)（MIT）；Tavily 与 Firecrawl 适配器为本项目原创贡献。API 密钥归各平台账号所有；本项目不持有任何凭据。

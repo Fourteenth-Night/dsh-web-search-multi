@@ -130,6 +130,17 @@ The plugin was validated through three complementary approaches:
 | Tavily | 1,000 credits/month; no payment method required ([credits & pricing](https://docs.tavily.com/documentation/api-credits)). | `basic` search = 1 credit; `advanced` = 2 credits. |
 | Firecrawl | 1,000 credits/month ≈ 500 searches or 1,000 pages scraped; no payment method required ([pricing](https://www.firecrawl.dev/pricing)). | Pay-as-you-go beyond the free balance. |
 
+## Acknowledgments
+
+The authors wish to thank:
+
+- The **DeepSeek Harness (DSH) community** for the web capability seam (`ctx.web.registerSearchProvider`) and the model-facing tool contract (`ctx.tools.register`), whose stable public interfaces made a third-party, runtime-composable search provider feasible without forking the harness.
+- **Exa, Tavily, and Firecrawl** for their generously provisioned free tiers, which enabled live end-to-end validation of all three adapters at zero cost and remain the recommended on-ramp for evaluation.
+- The maintainers of [`@deepseek-ai/dsh-web-search-exa`](https://github.com/deepseek-ai/deepseek-harness/tree/main/packages/web/web-search-exa), whose MIT-licensed reference implementation informed the design and output mapping of the Exa adapter.
+- Early adopters and reviewers whose feedback on configuration ergonomics and documentation directly shaped the current release.
+
+See [License and Attribution](#license-and-attribution) for provenance details.
+
 ## License and Attribution
 
 MIT License. The Exa adapter is ported from [`@deepseek-ai/dsh-web-search-exa`](https://github.com/deepseek-ai/deepseek-harness/tree/main/packages/web/web-search-exa) (MIT); the Tavily and Firecrawl adapters are original contributions of this project. API keys remain the property of their respective platform accounts; this project holds no credentials.
