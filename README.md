@@ -1,34 +1,62 @@
 # dsh-web-search-multi
 
-一个 DeepSeek Harness 搜索提供方插件：**一个插件、三个引擎（Exa / Tavily / Firecrawl）、三个模型工具**。
+**A unified, multi-engine web-search provider plugin for DeepSeek Harness.** One plugin integrates three independent search services — Exa, Tavily, and Firecrawl — and exposes each as a model-facing tool, enabling the language model to select an engine per query.
 
-## 它能做什么
+**中文版见 [README.zh.md](README.zh.md).**
 
-| 模型看到的工具 | 后端 | 特点 |
+---
+
+## Abstract
+
+`dsh-web-search-multi` extends the DeepSeek Harness web capability seam (`ctx.web`) with three search providers — Exa, Tavily, and Firecrawl — and registers three corresponding model-facing tools (`web_search_exa`, `web_search_tavily`, `web_search_firecrawl`) through the harness tool runtime (`ctx.tools`). Each tool routes directly to its dedicated engine instance, bypassing the seam's deployment-level provider selection, so the model may choose the engine best suited to the query (e.g., semantic research queries to Exa, news-oriented queries to Tavily, full-content retrieval to Firecrawl). The standard `web_search` tool remains available as a fallback, governed by the deployment configuration (`DSH_WEB_SEARCH_PROVIDER`).
+
+Authentication credentials are supplied exclusively through environment variables (`EXA_API_KEY`, `TAVILY_API_KEY`, `FIRECRAWL_API_KEY`); the plugin itself never stores or embeds secrets.
+
+## Scope and Compatibility
+
+- **Tested runtime**: DeepSeek Harness 0.1.2-alpha.1 line (cordis 4.0.1, `@deepseek-ai/dsh-web` 0.1.2-alpha.1).
+- **Peer dependencies**: `@deepseek-ai/cordis` ^4.0.1, `@deepseek-ai/dsh-web` ^0.1.2-alpha.1, `@deepseek-ai/dsh-launch-environment` ^0.1.2-alpha.1, `@deepseek-ai/dsh-tools` ^0.1.2-alpha.1, `@deepseek-ai/schemastery` ^3.18.1.
+- **Caveat**: peer ranges target the 0.1.2-alpha.1 line; other runtime lines (e.g., 0.1.5, 0.2.x) require re-validation of the peer versions before installation.
+
+## Model-Facing Tooling
+
+| Tool | Backend | Notes |
 |---|---|---|
-| `web_search_exa` | Exa | 神经/语义检索，研究、公司、学术类查询强 |
-| `web_search_tavily` | Tavily | 快、LLM-agent 友好，支持 topic（general/news/finance） |
-| `web_search_firecrawl` | Firecrawl | 搜索+全文抓取一体 |
-| `web_search`（标准工具） | 配置指定（兜底） | 由 `DSH_WEB_SEARCH_PROVIDER` 决定，默认 exa |
+| `web_search_exa` | Exa | Neural/semantic retrieval; strong for research-, company-, academic-, and people-oriented queries. |
+| `web_search_tavily` | Tavily | Latency-optimized, LLM-agent-friendly; supports topic filters (`general`, `news`, `finance`). |
+| `web_search_firecrawl` | Firecrawl | Search with optional full-page content retrieval in a single call. |
+| `web_search` (standard) | Config-selected | Fallback path; governed by `DSH_WEB_SEARCH_PROVIDER` (default `exa`). |
 
-- 三个引擎同时注册为 `ctx.web` provider（标准 `web_search` 仍可用）
-- 三个引擎工具经 `ctx.tools.register` 注册，**模型可按查询性质自主选择**（AI 自主分工）
-- 密钥全部走环境变量：`EXA_API_KEY` / `TAVILY_API_KEY` / `FIRECRAWL_API_KEY`（不进配置文件）
+All tools mirror the argument contract of the official `web_search` tool: a `queries` array of 1–4 non-empty strings, deduplicated; results are merged in rank-polling order, capped at `toolMaxResults`; output follows the canonical `{ sources, truncated }` shape with an `External web content follows...` untrusted-data notice.
 
-## 安装（在你的 DSH profile 中）
+## Architecture
 
-> 前提：harness 运行时 0.1.2-alpha.1 线（`@deepseek-ai/dsh-web` ^0.1.2-alpha.1、cordis ^4.0.1）。其他运行时请核对 peer 版本。
+1. **Provider registration**: each engine is registered via `ctx.web.registerSearchProvider`, which keeps the standard `web_search` tool operational under the deployment-chosen provider.
+2. **Tool registration**: each engine tool is registered via `ctx.tools.register(defineTool({...}))`, executing directly against its own provider instance — independent of the seam's provider-selection logic.
+3. **Selection semantics**: if the standard `web_search` is invoked while multiple providers are `available()` and none is explicitly selected, the seam raises `WEB_PROVIDER_AMBIGUOUS`. The explicit `DSH_WEB_SEARCH_PROVIDER` setting resolves this.
+4. **Credentials**: resolved at `apply()` time from the launch environment; absent keys leave the corresponding provider `available() === false` (graceful degradation, no startup failure).
+
+## Installation
+
+### Prerequisites
+
+- A DeepSeek Harness profile (harness runtime 0.1.2-alpha.1 line).
+- API keys for the engines you intend to use (see [Free Tiers](#free-tiers-verified-october-2026)).
+
+### Steps
+
+1. Place this package in your profile's `local-plugins` directory and link it into the profile workspace:
 
 ```powershell
-# 1) 把本包放进 profile 的 local-plugins 目录，然后 link 进 workspace：
 cd <DSH_HOME>\profiles\web
-<desktop>\resources\app\node_modules\pnpm\bin\pnpm.cjs add "link:./local-plugins/dsh-web-search-multi"
+pnpm add "link:./local-plugins/dsh-web-search-multi"
 ```
 
-> 桌面版自带 pnpm 入口：`<harness>\.desktop-bin\pnpm.cmd`（带 Windows 锁重命名恢复）。
+   (Desktop builds bundle a pnpm shim at `<harness>\.desktop-bin\pnpm.cmd`, which handles Windows locked-rename recovery.)
+
+2. Register the plugin in `cordis.patch.yml`. **Note**: new plugins must be wrapped in an `insert:` list — a bare `- id:/name:` entry denotes an override of an already-loaded plugin and causes a `patch: entry "..." not found` failure at boot.
 
 ```yaml
-# 2) cordis.patch.yml 注册（注意：新增插件必须用 insert: 包装！裸 - id:/name: 是覆盖已加载插件，会报 patch: entry not found）
 - insert:
     - id: web-search-multi
       name: "dsh-web-search-multi"
@@ -48,52 +76,60 @@ cd <DSH_HOME>\profiles\web
           limit: 8
 ```
 
+3. Configure credentials (user-level environment variables):
+
 ```powershell
-# 3) 设置密钥（用哪个设哪个）
-[Environment]::SetEnvironmentVariable("EXA_API_KEY", "exa-...", "User")
-[Environment]::SetEnvironmentVariable("TAVILY_API_KEY", "tvly-...", "User")
-[Environment]::SetEnvironmentVariable("FIRECRAWL_API_KEY", "fc-...", "User")
-[Environment]::SetEnvironmentVariable("DSH_WEB_SEARCH_PROVIDER", "exa", "User")  # 标准 web_search 兜底引擎
+[Environment]::SetEnvironmentVariable("EXA_API_KEY", "<key>", "User")
+[Environment]::SetEnvironmentVariable("TAVILY_API_KEY", "<key>", "User")
+[Environment]::SetEnvironmentVariable("FIRECRAWL_API_KEY", "<key>", "User")
+[Environment]::SetEnvironmentVariable("DSH_WEB_SEARCH_PROVIDER", "exa", "User")
 ```
 
-重启 DSH Desktop 生效。验证：新会话让模型搜索，观察 `web_search_exa / web_search_tavily / web_search_firecrawl` 是否可用。
+4. Restart DSH Desktop. In a new session, the three engine tools become available to the model.
 
-## 配置项（全部可选）
+## Configuration Reference
 
-| 键 | 默认 | 说明 |
+| Key | Default | Description |
 |---|---|---|
-| `toolMaxResults` | 8 | 每次工具调用返回来源上限 |
-| `toolMaxQueries` | 4 | 每次调用查询数上限（1–4，镜像官方 web_search） |
-| `toolTimeoutMs` | 30000 | 协作式工具调用预算（由 timeout policy 强制执行） |
-| `exa.searchType` | auto | auto | keyword | neural |
-| `exa.numResults` | 8 | Exa 每查询结果数 |
-| `tavily.searchDepth` | basic | basic（1 积分/次）| advanced（2 积分/次） |
-| `tavily.topic` | general | general | news | finance |
-| `tavily.maxResults` | 8 | Tavily 每查询结果数 |
-| `firecrawl.baseURL` | https://api.firecrawl.dev/v1 | 可切 v2（v1/v2 响应结构不同，插件两者兼容） |
-| `firecrawl.limit` | 8 | Firecrawl 每查询结果数 |
+| `toolMaxResults` | 8 | Maximum number of sources returned per tool call. |
+| `toolMaxQueries` | 4 | Maximum number of queries accepted per call (1–4, mirroring the official `web_search`). |
+| `toolTimeoutMs` | 30000 | Cooperative tool-call budget (ms), enforced by the harness timeout policy. |
+| `exa.searchType` | `auto` | `auto` \| `keyword` \| `neural`. |
+| `exa.numResults` | 8 | Results per query. |
+| `tavily.searchDepth` | `basic` | `basic` (1 credit) \| `advanced` (2 credits). |
+| `tavily.topic` | `general` | `general` \| `news` \| `finance`. |
+| `tavily.maxResults` | 8 | Results per query. |
+| `firecrawl.baseURL` | `https://api.firecrawl.dev/v1` | v2 is supported via explicit override; the response mapper handles both shapes (`data` array vs `data.matches`). |
+| `firecrawl.limit` | 8 | Results per query. |
 
-## 测试
+## Verification Methodology
 
-```bash
-# 需要三个环境变量之一（有哪个测哪个）
-EXA_API_KEY=... TAVILY_API_KEY=... FIRECRAWL_API_KEY=... node test/self-test.mjs
-```
+The plugin was validated through three complementary approaches:
 
-无需运行 harness：脚本用假 ctx 调用 `apply()`，对真实 API 执行三个工具并校验输出契约。
+1. **Live API execution**: each engine tool was executed against its live production API with real credentials, verifying end-to-end source retrieval and output-contract compliance.
+2. **Loader config composition**: the profile's composed configuration tree was validated with the harness CLI (`dsh --profile web --dump-config`), confirming error-free resolution of the plugin entry and its configuration.
+3. **Standalone self-test**: `npm test` runs `test/self-test.mjs`, which drives `apply()` with a stub context and — when credentials are present — executes each tool against the live APIs. Peer dependencies are substituted with minimal stubs via a Node loader hook, so the test suite runs without a harness installation.
 
-## 免费额度参考（2026-10 核实）
+## Known Limitations
 
-| 引擎 | 免费档 | 计费 |
+- **Single-engine-per-call**: each engine tool consumes exactly one engine per invocation; no multi-engine merge strategy is currently provided.
+- **Quota consumption**: live invocations draw from each service's metered quota (see free tiers below).
+- **Version coupling**: peer ranges are pinned to the 0.1.2-alpha.1 runtime line; wider runtime coverage is pending validation.
+- **Duplicate results across engines**: URL-level deduplication is applied within a single tool call; semantic duplicates across different engines are not filtered.
+
+## Security Considerations
+
+- Credentials are read solely from the launch environment; no secret is embedded in configuration or source.
+- If a key has been exposed (e.g., shared in chat or logs), rotate it at the respective dashboard and update the environment variable.
+
+## Free Tiers (verified October 2026)
+
+| Engine | Free tier | Billing model |
 |---|---|---|
-| Exa | $10/月 ≈ 2,500 次 Instant 搜索，每月重置，不绑卡 | 超出按量 |
-| Tavily | 1,000 积分/月，不绑卡 | basic=1 积分、advanced=2 积分 |
-| Firecrawl | 1,000 积分/月 ≈ 500 次搜索或 1,000 页抓取，不绑卡 | 超出按量 |
+| Exa | USD 10/month ≈ 2,500 Instant searches; resets monthly; no payment method required ([pricing](https://exa.ai/docs/admin/pricing)). | Pay-as-you-go beyond the free balance. |
+| Tavily | 1,000 credits/month; no payment method required ([credits & pricing](https://docs.tavily.com/documentation/api-credits)). | `basic` search = 1 credit; `advanced` = 2 credits. |
+| Firecrawl | 1,000 credits/month ≈ 500 searches or 1,000 pages scraped; no payment method required ([pricing](https://www.firecrawl.dev/pricing)). | Pay-as-you-go beyond the free balance. |
 
-## 许可证与致谢
+## License and Attribution
 
-MIT。Exa 适配器移植自 [@deepseek-ai/dsh-web-search-exa](https://github.com/deepseek-ai/deepseek-harness/tree/main/packages/web/web-search-exa)（MIT），使用其 API 语义；Tavily/Firecrawl 适配器为本项目原创。密钥归属各平台账号，本项目不代持任何密钥。
-
-## English
-
-See [README.en.md](README.en.md) for the English version.
+MIT License. The Exa adapter is ported from [`@deepseek-ai/dsh-web-search-exa`](https://github.com/deepseek-ai/deepseek-harness/tree/main/packages/web/web-search-exa) (MIT); the Tavily and Firecrawl adapters are original contributions of this project. API keys remain the property of their respective platform accounts; this project holds no credentials.
