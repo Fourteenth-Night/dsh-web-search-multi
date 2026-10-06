@@ -36,5 +36,15 @@
     "@deepseek-ai/dsh-launch-environment": "^0.1.2-alpha.1",
     "@deepseek-ai/dsh-tools": "^0.1.2-alpha.1",
     "@deepseek-ai/schemastery": "^3.18.1"
+  },
+  "homepage": "https://github.com/<your-account>/dsh-web-search-multi#readme",
+  "bugs": {
+    "url": "https://github.com/<your-account>/dsh-web-search-multi/issues"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }
